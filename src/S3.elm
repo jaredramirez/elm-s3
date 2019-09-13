@@ -3,8 +3,7 @@ module S3 exposing
     , FileData, Response, uploadFile, uploadFileTask
     )
 
-{-| This package is built to make uploading file to [Amazon S3](https://aws.amazon.com/s3/)
-quick and easy.
+{-| This package helps make uploading file to [Amazon S3](https://aws.amazon.com/s3/) quick and easy.
 
 Take a look at the [`README`](#README)
 
