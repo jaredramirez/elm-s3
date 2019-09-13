@@ -147,7 +147,7 @@ uploadFile fileData qualConfig toMsg =
 
 
 {-| Upload a file but as a task. This is helpful if you need to upload a file, then
-get it's location from the [`Response`](#Response) and set that on your server.
+get it's location from the [`Response`](#Response) and send that on your server.
 -}
 uploadFileTask : FileData -> Config -> Task Http.Error Response
 uploadFileTask fileData ((Internals.Config record) as qualConfig) =
