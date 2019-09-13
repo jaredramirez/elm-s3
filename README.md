@@ -8,7 +8,7 @@ This package helps make uploading file to [Amazon S3](https://aws.amazon.com/s3/
 
 # Usage
 
-First, you need to create some configuration for the request. This configuration holds data that's needed across all upload requests, so if you need to upload files in multiple places across your application you can create this config once and use it all over.
+First, you need to create a config for the request. This configuration holds data that's needed across all upload requests, so if you need to upload files in multiple places across your app you can create this config once and use it all over.
 
     import S3
 
@@ -67,7 +67,7 @@ And that's it!
 
 # Note on tracking upload progress
 
-Uploading to S3 requires getting the current time, so this implementation uses `Time.now`  and `Task` under the hood. Unfortunately, [you can't track progress on http tasks](https://github.com/elm/http/issues/61). I'm not sure if this is a really desired feature. If it is, please create an issue and I'll look into adding work around support for it!
+Uploading to S3 requires getting the current time, so this implementation uses `Time.now`  and `Task` under the hood. Unfortunately, [you can't track progress on http tasks](https://github.com/elm/http/issues/61). I'm not sure how important this feature is to people. If it a high priority for you, please create an issue and I'll look into adding work around support for it!
 
 # S3 Permissions
 

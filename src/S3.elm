@@ -5,7 +5,7 @@ module S3 exposing
 
 {-| This package helps make uploading file to [Amazon S3](https://aws.amazon.com/s3/) quick and easy.
 
-Take a look at the [`README`](#README)
+Take a look at the [`README`](https://package.elm-lang.org/packages/jaredramirez/elm-s3/latest/) for an example!
 
 
 # Creating a Config
