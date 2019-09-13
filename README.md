@@ -3,7 +3,11 @@
 This package is to make uploading file to [Amazon S3](https://aws.amazon.com/s3/)
 quick and easy.
 
-Let's jump right in!
+# Install
+
+`elm install jaredramirez/elm-s3`
+
+# Usage
 
 First, you need to create some configuration for the request. This configuration holds data
 that's needed across all upload requests, so if you need to upload files in multiple places
@@ -76,17 +80,17 @@ to the bucket (and path prefix) you want to upload too. Take a look [at AWS's do
 1.  If you use this package and run into issues with CORs. Try setting the CORs configuration on
     your bucket to something like:
 
-    """
+```
     <CORSConfiguration>
     <CORSRule>
-    <AllowedOrigin><http://myAmazingSite.com</AllowedOrigin>>>
+    <AllowedOrigin>http://myAmazingSite.com</AllowedOrigin>>>
     <AllowedMethod>POST</AllowedMethod>
     <ExposeHeader>ETag</ExposeHeader>
     <ExposeHeader>Location</ExposeHeader>
     <AllowedHeader>\*</AllowedHeader>
     </CORSRule>
     </CORSConfiguration>
-    """
+```
 
 Note the `AllowedOrigin` tag and `AllowedHeader` tag, which should fix the CORs problem
 but **also make sure to add both the `ExposeHeader` options. The upload request in
