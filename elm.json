@@ -3,7 +3,7 @@
     "name": "jaredramirez/elm-s3",
     "summary": "Upload files to S3 with Elm!",
     "license": "BSD-3-Clause",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "exposed-modules": [
         "S3"
     ],
@@ -19,8 +19,7 @@
         "ktonon/elm-crypto": "1.1.2 <= v < 2.0.0",
         "ktonon/elm-word": "2.1.2 <= v < 3.0.0",
         "lukewestby/elm-string-interpolate": "1.0.4 <= v < 2.0.0",
-        "rtfeldman/elm-iso8601-date-strings": "1.1.2 <= v < 2.0.0",
-        "truqu/elm-base64": "2.0.4 <= v < 3.0.0"
+        "rtfeldman/elm-iso8601-date-strings": "1.1.2 <= v < 2.0.0"
     },
     "test-dependencies": {}
 }
