@@ -2,6 +2,7 @@
 
 This package helps make uploading file to [Amazon S3](https://aws.amazon.com/s3/) quick and easy.
 
+**This package requires storing your AWS secret and access keys in your Elm code. Please note the security concern with having copies of these keys downloaded to each client that uses your app. With that in mind, proceed with caution.
 # Install
 
 `elm install jaredramirez/elm-s3`
