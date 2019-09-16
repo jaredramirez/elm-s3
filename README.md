@@ -2,7 +2,7 @@
 
 This package helps make uploading file to [Amazon S3](https://aws.amazon.com/s3/) quick and easy.
 
-# Security (Please read)
+# Note on security (Please read)
 
 **This package requires storing your AWS secret and access keys in your Elm code. Please note that there is a security concern with having copies of these keys downloaded to each client that uses your app.**
 
