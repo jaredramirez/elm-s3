@@ -2,7 +2,39 @@
 
 This package helps make uploading file to [Amazon S3](https://aws.amazon.com/s3/) quick and easy.
 
-**This package requires storing your AWS secret and access keys in your Elm code. Please note the security concern with having copies of these keys downloaded to each client that uses your app. With that in mind, proceed with caution.**
+# Security (Please read)
+
+**This package requires storing your AWS secret and access keys in your Elm code. Please note that there is a security concern with having copies of these keys downloaded to each client that uses your app.**
+
+Probably the best way to do S3 uploads is to store your AWS keys safely on your server, when your user is authenticated generate [presigned URLs](https://docs.aws.amazon.com/AmazonS3/latest/dev/PresignedUrlUploadObject.html), send that back to the client, the upload to that URL.
+
+That being said, this can be done less securely using only the browser. Because this package uses AWS secret and access keys, the best way to mitigate any risks is to make sure that your IAM user's policy only allows for `PutObject` and `PutObjectAcl` **and** only has access to the subdirectory within your bucket that want you upload files to.
+
+My user's IAM policy looks like this:
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:PutObjectAcl"
+            ],
+            "Resource": [
+                "arn:aws:s3:::my-bucket/uploads/*" // SPECIFY YOUR SUB DIRECTORY HERE
+            ]
+        }
+    ]
+}
+```
+
+If your keys fell into the wrong hands with this policy, the most access they'd have is the ability to upload and overwrite any files already uploaded. If you add unique IDs and timestamps to each filename that you upload, the possiblility of a file being overwritten become unlikely.
+
+**Please takes this information into consideration before using this library and proceed with caution.**
+
+
 # Install
 
 `elm install jaredramirez/elm-s3`
