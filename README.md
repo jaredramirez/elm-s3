@@ -102,17 +102,13 @@ And that's it!
 
 Uploading to S3 requires getting the current time, so this implementation uses `Time.now`  and `Task` under the hood. Unfortunately, [you can't track progress on http tasks](https://github.com/elm/http/issues/61). I'm not sure how important this feature is to people. If it a high priority for you, please create an issue and I'll look into adding work around support for it!
 
-# S3 Permissions
+# CORs issues
 
-There's a few things to note about S3 permissions.
-
-1. Make sure that your user's IAM policy and the bucket policy provides access to the bucket (and path prefix) you want to upload too. Take a look [at AWS's docs](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-policies-s3.html) for a few examples.
-
-2. If you use this package and run into issues with CORs, try setting the CORs configuration on your bucket to something like:
+If you use this package and run into issues with CORs, try setting the CORs configuration on your bucket to something like:
 ```
     <CORSConfiguration>
       <CORSRule>
-        <AllowedOrigin>http://myAmazingSite.com</AllowedOrigin>>>
+        <AllowedOrigin>http://myAmazingSite.com</AllowedOrigin>>
         <AllowedMethod>POST</AllowedMethod>
         <ExposeHeader>ETag</ExposeHeader>
         <ExposeHeader>Location</ExposeHeader>
