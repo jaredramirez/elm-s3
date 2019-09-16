@@ -1,7 +1,7 @@
 {
     "type": "package",
     "name": "jaredramirez/elm-s3",
-    "summary": "Upload files to S3 with Elm!",
+    "summary": "Upload files to AWS S3 with Elm!",
     "license": "BSD-3-Clause",
     "version": "1.0.2",
     "exposed-modules": [
