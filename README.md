@@ -108,7 +108,7 @@ If you use this package and run into issues with CORs, try setting the CORs conf
 ```
     <CORSConfiguration>
       <CORSRule>
-        <AllowedOrigin>http://myAmazingSite.com</AllowedOrigin>>
+        <AllowedOrigin>http://myAmazingSite.com</AllowedOrigin>
         <AllowedMethod>POST</AllowedMethod>
         <ExposeHeader>ETag</ExposeHeader>
         <ExposeHeader>Location</ExposeHeader>
