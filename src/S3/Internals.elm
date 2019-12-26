@@ -1,6 +1,9 @@
 module S3.Internals exposing
     ( Config(..)
     , Policy
+    ,  buildUploadKey
+       -- Exposed for testing
+
     , generatePolicy
     ,  makePolicy
        -- Exposed for testing
@@ -31,6 +34,43 @@ type Config
         , acl : String
         , successActionStatus : Int
         }
+
+
+
+-- Path --
+
+
+buildUploadKey : { prefix : String, fileName : String } -> String
+buildUploadKey { prefix, fileName } =
+    case prefix of
+        "" ->
+            fileName
+
+        _ ->
+            normalizePath prefix ++ "/" ++ normalizePath fileName
+
+
+normalizePath : String -> String
+normalizePath =
+    stripLeadingSlashes >> stripTrailingSlashes
+
+
+stripLeadingSlashes : String -> String
+stripLeadingSlashes str =
+    if String.startsWith "/" str then
+        String.dropLeft 1 str
+
+    else
+        str
+
+
+stripTrailingSlashes : String -> String
+stripTrailingSlashes str =
+    if String.endsWith "/" str then
+        String.dropRight 1 str
+
+    else
+        str
 
 
 
