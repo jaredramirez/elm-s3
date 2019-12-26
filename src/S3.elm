@@ -1,6 +1,7 @@
 module S3 exposing
     ( Config, config, withPrefix, withSuccessActionStatus, withAwsS3Host, withAcl
     , FileData, Response, uploadFile, uploadFileTask
+    , buildUploadKey
     )
 
 {-| This package helps make uploading file to [Amazon S3](https://aws.amazon.com/s3/) quick and easy.
@@ -162,10 +163,10 @@ uploadFileTask fileData ((Internals.Config record) as qualConfig) =
                             ]
 
                     key =
-                        interpolate "{0}/{1}"
-                            [ record.prefix
-                            , fileData.fileName
-                            ]
+                        buildUploadKey
+                            { prefix = record.prefix
+                            , fileName = fileData.fileName
+                            }
 
                     parts =
                         Internals.generatePolicy key
@@ -181,6 +182,39 @@ uploadFileTask fileData ((Internals.Config record) as qualConfig) =
                     , bucket = record.bucket
                     }
             )
+
+
+buildUploadKey : { prefix : String, fileName : String } -> String
+buildUploadKey { prefix, fileName } =
+    case prefix of
+        "" ->
+            fileName
+
+        _ ->
+            normalizePath prefix ++ "/" ++ normalizePath fileName
+
+
+normalizePath : String -> String
+normalizePath =
+    stripLeadingSlashes >> stripTrailingSlashes
+
+
+stripLeadingSlashes : String -> String
+stripLeadingSlashes str =
+    if String.startsWith "/" str then
+        String.dropLeft 1 str
+
+    else
+        str
+
+
+stripTrailingSlashes : String -> String
+stripTrailingSlashes str =
+    if String.endsWith "/" str then
+        String.dropRight 1 str
+
+    else
+        str
 
 
 uploadFileHttpTask :
