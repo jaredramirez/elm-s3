@@ -9,6 +9,7 @@ module S3.Internals exposing
        -- Exposed for testing
 
     , makeSignature
+    , makeUrl
     ,  strToBase64
        -- Exposed for testing
 
@@ -95,7 +96,7 @@ type alias Policy =
 -- Policy --
 
 
-generatePolicy : String -> String -> Config -> Time.Posix -> List ( String, String )
+generatePolicy : String -> String -> Config -> Posix -> List ( String, String )
 generatePolicy fullFilePath contentType qualConfig today =
     let
         policy =
@@ -175,10 +176,8 @@ makePolicy today contentType fullFilePath (Config record) =
 
 
 strToBase64 : String -> String
-strToBase64 str =
-    str
-        |> Base64.Encode.string
-        |> Base64.Encode.encode
+strToBase64 =
+    Base64.Encode.encode << Base64.Encode.string
 
 
 policyToJson : Policy -> Json.Encode.Value
@@ -213,6 +212,15 @@ policyToJson policy =
                 |> Json.Encode.list identity
           )
         ]
+
+
+
+-- URL --
+
+
+makeUrl : Config -> String
+makeUrl (Config record) =
+    "https://" ++ record.bucket ++ "." ++ record.awsS3Host
 
 
 
