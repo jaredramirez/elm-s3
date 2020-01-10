@@ -1,6 +1,6 @@
 module S3 exposing
     ( Config, config, withPrefix, withSuccessActionStatus, withAwsS3Host, withAcl
-    , FileData, Response, uploadFile, uploadFileTask
+    , FileData, Response, uploadFile, uploadFileTask, uploadFileHttp
     )
 
 {-| This package helps make uploading file to [Amazon S3](https://aws.amazon.com/s3/) quick and easy.
@@ -15,7 +15,7 @@ Take a look at the [`README`](https://package.elm-lang.org/packages/jaredramirez
 
 # Uploading a file
 
-@docs FileData, Response, uploadFile, uploadFileTask
+@docs FileData, Response, uploadFile, uploadFileTask, uploadFileHttp
 
 -}
 
