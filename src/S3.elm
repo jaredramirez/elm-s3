@@ -227,7 +227,7 @@ uploadFileHttpTask record =
         { method = "POST"
         , headers = []
         , url = record.url
-        , body = Http.multipartBody (record.parts ++ [ Http.filePart "file" file ])
+        , body = Http.multipartBody (record.parts ++ [ Http.filePart "file" record.file ])
         , resolver = Http.bytesResolver (expectedResponse record)
         , timeout = Nothing
         }
@@ -250,7 +250,7 @@ uploadFileHttpRequest toMsg record =
         { method = "POST"
         , headers = []
         , url = record.url
-        , body = Http.multipartBody (record.parts ++ [ Http.filePart "file" file ])
+        , body = Http.multipartBody (record.parts ++ [ Http.filePart "file" record.file ])
         , expect = Http.expectBytesResponse toMsg (expectedResponse record)
         , timeout = record.timeout
         , tracker = record.tracker

@@ -97,7 +97,7 @@ type alias Policy =
 -- Policy --
 
 
-generatePolicy : String -> String -> Config -> Posix -> List ( String, String )
+generatePolicy : String -> String -> Config -> Posix -> List Http.Part
 generatePolicy fullFilePath contentType qualConfig today =
     let
         policy =
