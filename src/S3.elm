@@ -217,7 +217,7 @@ uploadFileHttp toMsg ((Internals.Config record) as qualConfig) { timeout, tracke
 uploadFileHttpTask :
     { url : String
     , file : File
-    , parts : List ( String, String )
+    , parts : List Http.Part
     , key : String
     , bucket : String
     }
@@ -227,7 +227,7 @@ uploadFileHttpTask record =
         { method = "POST"
         , headers = []
         , url = record.url
-        , body = fileBodyWithParts record.file record.parts
+        , body = Http.multipartBody (record.parts ++ [ Http.filePart "file" file ])
         , resolver = Http.bytesResolver (expectedResponse record)
         , timeout = Nothing
         }
@@ -238,7 +238,7 @@ uploadFileHttpRequest :
     ->
         { url : String
         , file : File
-        , parts : List ( String, String )
+        , parts : List Http.Part
         , key : String
         , bucket : String
         , timeout : Maybe Float
@@ -250,18 +250,11 @@ uploadFileHttpRequest toMsg record =
         { method = "POST"
         , headers = []
         , url = record.url
-        , body = fileBodyWithParts record.file record.parts
+        , body = Http.multipartBody (record.parts ++ [ Http.filePart "file" file ])
         , expect = Http.expectBytesResponse toMsg (expectedResponse record)
         , timeout = record.timeout
         , tracker = record.tracker
         }
-
-
-fileBodyWithParts : File -> List ( String, String ) -> Http.Body
-fileBodyWithParts file =
-    Http.multipartBody
-        << List.foldr (\( k, v ) -> (::) (Http.stringPart k v))
-            [ Http.filePart "file" file ]
 
 
 expectedResponse : { r | bucket : String, key : String } -> Http.Response Bytes -> Result Http.Error Response

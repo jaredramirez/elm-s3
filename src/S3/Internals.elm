@@ -17,6 +17,7 @@ module S3.Internals exposing
 
 import Base64.Encode
 import Crypto.HMAC
+import Http
 import Iso8601
 import Json.Encode
 import Time exposing (Posix)
@@ -127,19 +128,17 @@ generatePolicyParts :
     , contentType : String
     }
     -> Config
-    -> List ( String, String )
+    -> List Http.Part
 generatePolicyParts { base64Policy, signature, policy, contentType } (Config record) =
-    [ ( "key", policy.key )
-    , ( "acl", record.acl )
-    , ( "success_action_status"
-      , record.successActionStatus |> String.fromInt
-      )
-    , ( "Content-Type", contentType )
-    , ( "X-Amz-Credential", policy.amzCredential )
-    , ( "X-Amz-Algorithm", policy.amzAlgorithm )
-    , ( "X-Amz-Date", policy.amzDate )
-    , ( "Policy", base64Policy )
-    , ( "X-Amz-Signature", signature )
+    [ Http.stringPart "key" policy.key
+    , Http.stringPart "acl" record.acl
+    , Http.stringPart "success_action_status" (String.fromInt record.successActionStatus)
+    , Http.stringPart "Content-Type" contentType
+    , Http.stringPart "X-Amz-Credential" policy.amzCredential
+    , Http.stringPart "X-Amz-Algorithm" policy.amzAlgorithm
+    , Http.stringPart "X-Amz-Date" policy.amzDate
+    , Http.stringPart "Policy" base64Policy
+    , Http.stringPart "X-Amz-Signature" signature
     ]
 
 
