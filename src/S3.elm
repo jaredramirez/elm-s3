@@ -1,7 +1,6 @@
 module S3 exposing
-    ( Config, config, withPrefix, withSuccessActionStatus, withAwsS3Host, withAcl
-    , FileData, Response, uploadFileTask, uploadFileHttp, uploadFile
-    , withTimeout
+    ( Config, config, withPrefix, withSuccessActionStatus, withAwsS3Host, withAcl, withTimeout
+    , FileData, Response, uploadFileCmd, uploadFileTask, uploadFileHttp, uploadFile
     )
 
 {-| This package helps make uploading file to [Amazon S3](https://aws.amazon.com/s3/) quick and easy.
@@ -11,7 +10,7 @@ Take a look at the [`README`](https://package.elm-lang.org/packages/jaredramirez
 
 # Creating a Config
 
-@docs Config, config, withPrefix, withSuccessActionStatus, withAwsS3Host, withAcl
+@docs Config, config, withPrefix, withSuccessActionStatus, withAwsS3Host, withAcl, withTimeout
 
 
 # Uploading a file
@@ -104,7 +103,7 @@ withAcl prefix (Internals.Config record) =
     Internals.Config { record | prefix = prefix }
 
 
-{-| Add a cusotm success HTTP status. This defaults to `201`.
+{-| Add a custom success HTTP status. This defaults to `201`.
 
     config |> withSuccessActionStatus 200
 
