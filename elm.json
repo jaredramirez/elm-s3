@@ -3,7 +3,7 @@
     "name": "jaredramirez/elm-s3",
     "summary": "Upload files to AWS S3 with Elm!",
     "license": "BSD-3-Clause",
-    "version": "1.0.4",
+    "version": "1.1.0",
     "exposed-modules": [
         "S3"
     ],
