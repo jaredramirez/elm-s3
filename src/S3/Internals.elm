@@ -35,6 +35,7 @@ type Config
         , prefix : String
         , acl : String
         , successActionStatus : Int
+        , maybeTimeout : Maybe Float
         }
 
 
@@ -176,7 +177,7 @@ makePolicy today contentType fullFilePath (Config record) =
 
 strToBase64 : String -> String
 strToBase64 =
-    Base64.Encode.encode << Base64.Encode.string
+    Base64.Encode.string >> Base64.Encode.encode
 
 
 policyToJson : Policy -> Json.Encode.Value

@@ -1,6 +1,7 @@
 module S3 exposing
     ( Config, config, withPrefix, withSuccessActionStatus, withAwsS3Host, withAcl
-    , FileData, Response, uploadFile, uploadFileTask, uploadFileHttp
+    , FileData, Response, uploadFileTask, uploadFileHttp, uploadFile
+    , withTimeout
     )
 
 {-| This package helps make uploading file to [Amazon S3](https://aws.amazon.com/s3/) quick and easy.
@@ -15,7 +16,7 @@ Take a look at the [`README`](https://package.elm-lang.org/packages/jaredramirez
 
 # Uploading a file
 
-@docs FileData, Response, uploadFile, uploadFileTask, uploadFileHttp
+@docs FileData, Response, uploadFileCmd, uploadFileTask, uploadFileHttp, uploadFile
 
 -}
 
@@ -57,6 +58,7 @@ config { accessKey, secretKey, bucket, region } =
         , prefix = ""
         , acl = awsAcl
         , successActionStatus = successActionStatus
+        , maybeTimeout = Nothing
         }
 
 
@@ -112,6 +114,16 @@ withSuccessActionStatus int (Internals.Config record) =
     Internals.Config { record | successActionStatus = int }
 
 
+{-| Add a timeout to the network request. From the elm-http docs: "The timeout is the number of milliseconds you are willing to wait before giving up."
+
+    config |> withTimeout 5000
+
+-}
+withTimeout : Float -> Config -> Config
+withTimeout float (Internals.Config record) =
+    Internals.Config { record | maybeTimeout = Just float }
+
+
 
 -- Task --
 
@@ -137,10 +149,17 @@ type alias Response =
 
 {-| Upload a file
 -}
-uploadFile : FileData -> Config -> (Result Http.Error Response -> msg) -> Cmd msg
-uploadFile fileData qualConfig toMsg =
+uploadFileCmd : (Result Http.Error Response -> msg) -> FileData -> Config -> Cmd msg
+uploadFileCmd toMsg fileData qualConfig =
     uploadFileTask fileData qualConfig
         |> Task.attempt toMsg
+
+
+{-| Deprecated. Use `uploadFileCmd` instead
+-}
+uploadFile : FileData -> Config -> (Result Http.Error Response -> msg) -> Cmd msg
+uploadFile fileData qualConfig toMsg =
+    uploadFileCmd toMsg fileData qualConfig
 
 
 {-| Upload a file but as a task. This is helpful if you need to upload a file, then
@@ -173,6 +192,7 @@ uploadFileTask fileData ((Internals.Config record) as qualConfig) =
                     , parts = parts
                     , key = key
                     , bucket = record.bucket
+                    , maybeTimeout = record.maybeTimeout
                     }
             )
 
@@ -180,13 +200,14 @@ uploadFileTask fileData ((Internals.Config record) as qualConfig) =
 {-| Upload file via `Http.request`. Useful if you want to get the `tracker` but you must provide your own `Time.now` due to limitations with `Http` + `Task`.
 -}
 uploadFileHttp :
-    (Result Http.Error Response -> msg)
-    -> Config
-    -> { timeout : Maybe Float, tracker : Maybe String }
+    { toMsg : Result Http.Error Response -> msg
+    , maybeTracker : Maybe String
+    , now : Posix
+    }
     -> FileData
-    -> Posix
+    -> Config
     -> Cmd msg
-uploadFileHttp toMsg ((Internals.Config record) as qualConfig) { timeout, tracker } fileData today =
+uploadFileHttp { maybeTracker, now, toMsg } fileData ((Internals.Config record) as qualConfig) =
     let
         url =
             Internals.makeUrl qualConfig
@@ -201,7 +222,7 @@ uploadFileHttp toMsg ((Internals.Config record) as qualConfig) { timeout, tracke
             Internals.generatePolicy key
                 fileData.contentType
                 qualConfig
-                today
+                now
     in
     uploadFileHttpRequest toMsg
         { url = url
@@ -209,8 +230,8 @@ uploadFileHttp toMsg ((Internals.Config record) as qualConfig) { timeout, tracke
         , parts = parts
         , key = key
         , bucket = record.bucket
-        , timeout = timeout
-        , tracker = tracker
+        , maybeTimeout = record.maybeTimeout
+        , maybeTracker = maybeTracker
         }
 
 
@@ -220,6 +241,7 @@ uploadFileHttpTask :
     , parts : List Http.Part
     , key : String
     , bucket : String
+    , maybeTimeout : Maybe Float
     }
     -> Task Http.Error Response
 uploadFileHttpTask record =
@@ -229,7 +251,7 @@ uploadFileHttpTask record =
         , url = record.url
         , body = Http.multipartBody (record.parts ++ [ Http.filePart "file" record.file ])
         , resolver = Http.bytesResolver (expectedResponse record)
-        , timeout = Nothing
+        , timeout = record.maybeTimeout
         }
 
 
@@ -241,8 +263,8 @@ uploadFileHttpRequest :
         , parts : List Http.Part
         , key : String
         , bucket : String
-        , timeout : Maybe Float
-        , tracker : Maybe String
+        , maybeTimeout : Maybe Float
+        , maybeTracker : Maybe String
         }
     -> Cmd msg
 uploadFileHttpRequest toMsg record =
@@ -252,12 +274,15 @@ uploadFileHttpRequest toMsg record =
         , url = record.url
         , body = Http.multipartBody (record.parts ++ [ Http.filePart "file" record.file ])
         , expect = Http.expectBytesResponse toMsg (expectedResponse record)
-        , timeout = record.timeout
-        , tracker = record.tracker
+        , timeout = record.maybeTimeout
+        , tracker = record.maybeTracker
         }
 
 
-expectedResponse : { r | bucket : String, key : String } -> Http.Response Bytes -> Result Http.Error Response
+expectedResponse :
+    { r | bucket : String, key : String }
+    -> Http.Response Bytes
+    -> Result Http.Error Response
 expectedResponse record response =
     case response of
         Http.BadUrl_ badUrl ->
