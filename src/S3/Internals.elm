@@ -9,6 +9,7 @@ module S3.Internals exposing
        -- Exposed for testing
 
     , makeSignature
+    , makeUrl
     ,  strToBase64
        -- Exposed for testing
 
@@ -16,6 +17,7 @@ module S3.Internals exposing
 
 import Base64.Encode
 import Crypto.HMAC
+import Http
 import Iso8601
 import Json.Encode
 import Time exposing (Posix)
@@ -95,7 +97,7 @@ type alias Policy =
 -- Policy --
 
 
-generatePolicy : String -> String -> Config -> Time.Posix -> List ( String, String )
+generatePolicy : String -> String -> Config -> Posix -> List Http.Part
 generatePolicy fullFilePath contentType qualConfig today =
     let
         policy =
@@ -126,19 +128,17 @@ generatePolicyParts :
     , contentType : String
     }
     -> Config
-    -> List ( String, String )
+    -> List Http.Part
 generatePolicyParts { base64Policy, signature, policy, contentType } (Config record) =
-    [ ( "key", policy.key )
-    , ( "acl", record.acl )
-    , ( "success_action_status"
-      , record.successActionStatus |> String.fromInt
-      )
-    , ( "Content-Type", contentType )
-    , ( "X-Amz-Credential", policy.amzCredential )
-    , ( "X-Amz-Algorithm", policy.amzAlgorithm )
-    , ( "X-Amz-Date", policy.amzDate )
-    , ( "Policy", base64Policy )
-    , ( "X-Amz-Signature", signature )
+    [ Http.stringPart "key" policy.key
+    , Http.stringPart "acl" record.acl
+    , Http.stringPart "success_action_status" (String.fromInt record.successActionStatus)
+    , Http.stringPart "Content-Type" contentType
+    , Http.stringPart "X-Amz-Credential" policy.amzCredential
+    , Http.stringPart "X-Amz-Algorithm" policy.amzAlgorithm
+    , Http.stringPart "X-Amz-Date" policy.amzDate
+    , Http.stringPart "Policy" base64Policy
+    , Http.stringPart "X-Amz-Signature" signature
     ]
 
 
@@ -175,10 +175,8 @@ makePolicy today contentType fullFilePath (Config record) =
 
 
 strToBase64 : String -> String
-strToBase64 str =
-    str
-        |> Base64.Encode.string
-        |> Base64.Encode.encode
+strToBase64 =
+    Base64.Encode.encode << Base64.Encode.string
 
 
 policyToJson : Policy -> Json.Encode.Value
@@ -213,6 +211,15 @@ policyToJson policy =
                 |> Json.Encode.list identity
           )
         ]
+
+
+
+-- URL --
+
+
+makeUrl : Config -> String
+makeUrl (Config record) =
+    "https://" ++ record.bucket ++ "." ++ record.awsS3Host
 
 
 

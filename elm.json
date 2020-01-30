@@ -18,10 +18,10 @@
         "ivadzy/bbase64": "1.1.1 <= v < 2.0.0",
         "ktonon/elm-crypto": "1.1.2 <= v < 2.0.0",
         "ktonon/elm-word": "2.1.2 <= v < 3.0.0",
-        "lukewestby/elm-string-interpolate": "1.0.4 <= v < 2.0.0",
         "rtfeldman/elm-iso8601-date-strings": "1.1.2 <= v < 2.0.0"
     },
     "test-dependencies": {
-        "elm-explorations/test": "1.2.2 <= v < 2.0.0"
+        "elm-explorations/test": "1.2.2 <= v < 2.0.0",
+        "lukewestby/elm-string-interpolate": "1.0.4 <= v < 2.0.0"
     }
 }

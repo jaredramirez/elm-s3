@@ -1,6 +1,6 @@
 module S3 exposing
     ( Config, config, withPrefix, withSuccessActionStatus, withAwsS3Host, withAcl
-    , FileData, Response, uploadFile, uploadFileTask
+    , FileData, Response, uploadFile, uploadFileTask, uploadFileHttp
     )
 
 {-| This package helps make uploading file to [Amazon S3](https://aws.amazon.com/s3/) quick and easy.
@@ -15,15 +15,15 @@ Take a look at the [`README`](https://package.elm-lang.org/packages/jaredramirez
 
 # Uploading a file
 
-@docs FileData, Response, uploadFile, uploadFileTask
+@docs FileData, Response, uploadFile, uploadFileTask, uploadFileHttp
 
 -}
 
+import Bytes exposing (Bytes)
 import Dict
 import File exposing (File)
 import Http
 import S3.Internals as Internals
-import String.Interpolate exposing (interpolate)
 import Task exposing (Task)
 import Time exposing (Posix)
 
@@ -84,14 +84,11 @@ withPrefix prefix (Internals.Config record) =
 withPrefixHelp : String -> String
 withPrefixHelp prefix =
     -- Are there other validations to do here?
-    prefix
-        |> (\p ->
-                if String.endsWith "/" p then
-                    String.dropRight 1 p
+    if String.endsWith "/" prefix then
+        String.dropRight 1 prefix
 
-                else
-                    p
-           )
+    else
+        prefix
 
 
 {-| Add a custom acl (Access Control List) for the uploaded document.
@@ -156,10 +153,7 @@ uploadFileTask fileData ((Internals.Config record) as qualConfig) =
             (\today ->
                 let
                     url =
-                        interpolate """https://{0}.{1}"""
-                            [ record.bucket
-                            , record.awsS3Host
-                            ]
+                        Internals.makeUrl qualConfig
 
                     key =
                         Internals.buildUploadKey
@@ -183,57 +177,117 @@ uploadFileTask fileData ((Internals.Config record) as qualConfig) =
             )
 
 
+{-| Upload file via `Http.request`. Useful if you want to get the `tracker` but you must provide your own `Time.now` due to limitations with `Http` + `Task`.
+-}
+uploadFileHttp :
+    (Result Http.Error Response -> msg)
+    -> Config
+    -> { timeout : Maybe Float, tracker : Maybe String }
+    -> FileData
+    -> Posix
+    -> Cmd msg
+uploadFileHttp toMsg ((Internals.Config record) as qualConfig) { timeout, tracker } fileData today =
+    let
+        url =
+            Internals.makeUrl qualConfig
+
+        key =
+            Internals.buildUploadKey
+                { prefix = record.prefix
+                , fileName = fileData.fileName
+                }
+
+        parts =
+            Internals.generatePolicy key
+                fileData.contentType
+                qualConfig
+                today
+    in
+    uploadFileHttpRequest toMsg
+        { url = url
+        , file = fileData.file
+        , parts = parts
+        , key = key
+        , bucket = record.bucket
+        , timeout = timeout
+        , tracker = tracker
+        }
+
+
 uploadFileHttpTask :
     { url : String
     , file : File
-    , parts : List ( String, String )
+    , parts : List Http.Part
     , key : String
     , bucket : String
     }
     -> Task Http.Error Response
-uploadFileHttpTask { url, file, parts, key, bucket } =
+uploadFileHttpTask record =
     Http.riskyTask
         { method = "POST"
-        , headers =
-            []
-        , url = url
-        , body =
-            Http.multipartBody
-                (List.map (\( a, b ) -> Http.stringPart a b) parts
-                    ++ [ Http.filePart "file" file ]
-                )
-        , resolver =
-            Http.bytesResolver
-                (\response ->
-                    case response of
-                        Http.BadUrl_ badUrl ->
-                            Err (Http.BadUrl badUrl)
-
-                        Http.Timeout_ ->
-                            Err Http.Timeout
-
-                        Http.NetworkError_ ->
-                            Err Http.NetworkError
-
-                        Http.BadStatus_ metadata _ ->
-                            Err (Http.BadStatus metadata.statusCode)
-
-                        Http.GoodStatus_ metadata _ ->
-                            Maybe.map2
-                                (\etag location ->
-                                    { etag = etag |> String.replace "\"" ""
-                                    , location = location
-                                    , bucket = bucket
-                                    , key = key
-                                    }
-                                )
-                                (Dict.get "etag" metadata.headers)
-                                (Dict.get "location" metadata.headers)
-                                |> Result.fromMaybe
-                                    (Http.BadBody "ETag or Location missing on response header")
-                )
+        , headers = []
+        , url = record.url
+        , body = Http.multipartBody (record.parts ++ [ Http.filePart "file" record.file ])
+        , resolver = Http.bytesResolver (expectedResponse record)
         , timeout = Nothing
         }
+
+
+uploadFileHttpRequest :
+    (Result Http.Error Response -> msg)
+    ->
+        { url : String
+        , file : File
+        , parts : List Http.Part
+        , key : String
+        , bucket : String
+        , timeout : Maybe Float
+        , tracker : Maybe String
+        }
+    -> Cmd msg
+uploadFileHttpRequest toMsg record =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = record.url
+        , body = Http.multipartBody (record.parts ++ [ Http.filePart "file" record.file ])
+        , expect = Http.expectBytesResponse toMsg (expectedResponse record)
+        , timeout = record.timeout
+        , tracker = record.tracker
+        }
+
+
+expectedResponse : { r | bucket : String, key : String } -> Http.Response Bytes -> Result Http.Error Response
+expectedResponse record response =
+    case response of
+        Http.BadUrl_ badUrl ->
+            Err (Http.BadUrl badUrl)
+
+        Http.Timeout_ ->
+            Err Http.Timeout
+
+        Http.NetworkError_ ->
+            Err Http.NetworkError
+
+        Http.BadStatus_ metadata _ ->
+            Err (Http.BadStatus metadata.statusCode)
+
+        Http.GoodStatus_ metadata _ ->
+            let
+                headerGet : String -> Http.Error -> Result Http.Error String
+                headerGet key missingErr =
+                    Result.fromMaybe missingErr (Dict.get key metadata.headers)
+            in
+            Result.map2
+                (\etag location ->
+                    { etag = String.replace "\"" "" etag
+                    , location = location
+                    , bucket = record.bucket
+                    , key = record.key
+                    }
+                )
+                (headerGet "etag" (Http.BadBody "ETag missing on response header"))
+                (headerGet "location" (Http.BadBody "Location missing on response header"))
 
 
 
